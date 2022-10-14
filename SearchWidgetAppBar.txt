@@ -1,0 +1,166 @@
+1. SearchAppBar Components를 생성하기
+
+enum class SearchWidgetState {
+    OPENED, CLOSED
+}
+
+@Composable
+fun MainAppBar(
+    searchWidgetState: SearchWidgetState,
+    searchTextState: String,
+    onTextChange: (String) -> Unit,
+    onCloseClicked: () -> Unit,
+    onSearchClicked: (String) -> Unit,
+    onSearchTriggered: () -> Unit
+) {
+    when(searchWidgetState) {
+        SearchWidgetState.CLOSED -> {
+            DefaultAppBar ( onSearchClicked = onSearchTriggered)
+        }
+        SearchWidgetState.OPENED -> {
+            SearchAppBar(
+                text = searchTextState,
+                onTextChange = onTextChange,
+                onCloseClicked = onCloseClicked,
+                onSearchClicked = onSearchClicked
+            )
+        }
+    }
+}
+
+
+@Composable
+fun DefaultAppBar(onSearchClicked: () -> Unit ) {
+    TopAppBar (
+        title = {
+            Text(text = "Home")
+        },
+        actions = {
+            IconButton(onClick = { onSearchClicked() }) {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = "",
+                    tint = Color.White
+                )
+            }
+        }
+    )
+}
+
+@Composable
+fun SearchAppBar(
+    text: String,
+    onTextChange: (String) -> Unit,
+    onCloseClicked: () -> Unit,
+    onSearchClicked: (String) -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        elevation = AppBarDefaults.TopAppBarElevation,
+        color = MaterialTheme.colors.primary
+    ) {
+        TextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = text,
+            onValueChange = onTextChange,
+            placeholder = {
+                Text( modifier = Modifier.alpha(ContentAlpha.medium), text = "Search here...", color = Color.White)
+            },
+            textStyle = TextStyle(fontSize = MaterialTheme.typography.subtitle1.fontSize),
+            singleLine = true,
+            leadingIcon = {
+                IconButton(onClick = {}, modifier= Modifier.alpha(ContentAlpha.medium)) {
+                    Icon(imageVector = Icons.Default.Search, contentDescription = "", tint = Color.White)
+                }
+            },
+            trailingIcon = {
+                IconButton(onClick = {
+                    if(text.isNotEmpty()) {
+                        onTextChange("")
+                    } else {
+                        onCloseClicked()
+                    }
+                }) {
+                    Icon( imageVector = Icons.Default.Close, contentDescription = "", tint = Color.White)
+                }
+            },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    onSearchClicked(text)
+                }
+            ),
+            colors = TextFieldDefaults.textFieldColors(
+                backgroundColor = Color.Transparent,
+                cursorColor = Color.White.copy(alpha = ContentAlpha.medium)
+            )
+        )
+    }
+}
+
+class MainViewModel: ViewModel() {
+
+    private val _searchWidgetState: MutableState<SearchWidgetState> =
+        mutableStateOf(SearchWidgetState.CLOSED)
+    val searchWidgetState: State<SearchWidgetState> = _searchWidgetState
+
+    private val _searchTextState: MutableState<String> =
+        mutableStateOf("")
+    val searchTextState: State<String> = _searchTextState
+
+    fun updateSearchWidgetState(newValue: SearchWidgetState) {
+        _searchWidgetState.value = newValue
+    }
+
+    fun updateSearchTextState(newValue: String) {
+        _searchTextState.value = newValue
+    }
+}
+
+@Composable
+fun MainScreen(mainViewModel: MainViewModel) {
+    val searchWidgetState by mainViewModel.searchWidgetState
+    val searchTextState by mainViewModel.searchTextState
+
+    Scaffold(topBar = {
+        MainAppBar(
+            searchWidgetState = searchWidgetState,
+            searchTextState = searchTextState,
+            onTextChange = {
+                           mainViewModel.updateSearchTextState(newValue = it)
+            },
+            onCloseClicked = {
+                             mainViewModel.updateSearchWidgetState(SearchWidgetState.CLOSED)
+            },
+            onSearchClicked = {
+                Log.d("kimdo", "MainScreen: ${it}")
+            },
+            onSearchTriggered = {
+                mainViewModel.updateSearchWidgetState(SearchWidgetState.OPENED)
+            }
+        )
+    }) {
+    }
+}
+
+최종사용법
+class MainActivity : ComponentActivity() {
+    private val mainViewModel: MainViewModel by viewModels()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MySearchWidgetTheme {
+                MainScreen(mainViewModel = mainViewModel)
+            }
+        }
+    }
+}
+
+
+2. ? 과연무엇이 올까요?
+
+
